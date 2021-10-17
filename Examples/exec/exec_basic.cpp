@@ -9,6 +9,7 @@ int main(){
 	std::cout << "using exec to execute executable: " << std::endl;
 	
 	execlp("cat","cat","test.txt",NULL); //works
+	
 	// execlp("cat","whatever","test.txt",NULL); //also works
 
 	/*
