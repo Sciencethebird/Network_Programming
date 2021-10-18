@@ -8,6 +8,11 @@
 #include<string>
 #include<vector>
 #include<sstream>
+#include<readline/readline.h>
+#include<readline/history.h>
+
+#define MAXCOM 1000 // max number of letters to be supported
+#define MAXLIST 100 // max number of commands to be supported
 
 typedef std::vector<std::string> t_args;
 
@@ -17,10 +22,8 @@ void printcwd(){
     getcwd(cwd, sizeof(cwd));
     printf("\ncwd: %s", cwd);
 }
-char** create_args(t_args* parsed){
-    char** c_arg = new (char*) [par]
-}
-void execArgs(t_args* parsed){
+
+void execArgs(char** parsed){
     // fork a child to execute command
     pid_t pid = fork();
 
@@ -28,10 +31,9 @@ void execArgs(t_args* parsed){
         printf("\nfork() error..");
         return;
     } else if (pid == 0) {
-        for(auto arg:(*parsed)){
-
-        }
-        if (execvp())
+        if (execvp(parsed[0], parsed) < 0)
+            printf("\nCommand execution failed...");
+        exit(0);
     } else {
         // wait for child to terminate
         wait(NULL);
@@ -39,62 +41,72 @@ void execArgs(t_args* parsed){
     }
 
 }
-// take input
-int takeInput(std::string* str){
-    printf("\n%% ");
-    std::getline(std::cin, *str);
-    std::cout << *str << " len: " << str->length() << std::endl;
-    if ( str->length() != 0 ) return 0;
-    else return 1;
+
+// Function to take input
+int takeInput(char* str)
+{
+	char* buf;
+
+	buf = readline("\n% ");
+	if (strlen(buf) != 0) {
+		add_history(buf);
+		strcpy(str, buf);
+		return 0;
+	} else {
+		return 1;
+	}
 }
+
 
 // special command handler
-int CmdHandler(t_args* parsed){
-    t_args MyOwnCmds = {"exit", "cd"};
-    int matched_idx = -1;
-    for (int i = 0; i < MyOwnCmds.size(); i++){
-        if( parsed->front() == MyOwnCmds[i] ) matched_idx = i;
-    }
-    switch (matched_idx){
-    case 0:
-        printf("keep up gogo~~\n");
-        exit(0);
-    case 1:
-        chdir( (*parsed)[1].c_str() );
+int CmdHandler(char** parsed){
+	int NoOfOwnCmds = 2, i, switchOwnArg = 0;
+	char* ListOfOwnCmds[NoOfOwnCmds];
+	char* username;
+
+	ListOfOwnCmds[0] = strdup("exit");
+	ListOfOwnCmds[1] = strdup("cd");
+
+	for (i = 0; i < NoOfOwnCmds; i++) {
+		if (strcmp(parsed[0], ListOfOwnCmds[i]) == 0) {
+			switchOwnArg = i + 1;
+			break;
+		}
+	}
+
+	switch (switchOwnArg) {
+	case 1:
+		printf("\nGoodbye\n");
+		exit(0);
+	case 2:
+		chdir(parsed[1]);
 		return 1;
-    default:
-        break;
-    }
-    return 0;
-}
-void ttesparseSpace(std::string str, t_args* parsed){
-    // https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c?answertab=votes#tab-top
-    parsed->clear();
-    size_t pos = 0;
-    std::string token;
-    while( (pos = str.find(" ")) != std::string::npos ){
-        token = str.substr(0, pos);
-        std::cout << token << std::endl;
-        parsed->push_back(token);
-        str.erase(0, pos+1); //1 is length of delimiter
-    }
+	default:
+		break;
+	}
 
+	return 0;
 }
 
-void parseSpace(std::string str, t_args* parsed){
-    // https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c?answertab=votes#tab-top
-    parsed->clear();
-    std::istringstream ss(str);
-    std::string token;
-    while( ss >> token )
-        parsed->push_back(token);
+
+void parseSpace(char* str, char** parsed){
+	int i;
+
+	for (i = 0; i < MAXLIST; i++) {
+		parsed[i] = strsep(&str, " ");
+
+		if (parsed[i] == NULL)
+			break;
+		if (strlen(parsed[i]) == 0)
+			i--;
+	}
 }
 
-int processString(std::string* str, t_args* parsed, t_args* parsed_pipe){
+int processString(char* str, char** parsed, char** parsedpipe){
 
     int piped = 0;
 
-    parseSpace(*str, parsed);
+    parseSpace(str, parsed);
 
     if (CmdHandler(parsed)) return 0;
     else return 1 + piped;
@@ -104,15 +116,15 @@ int processString(std::string* str, t_args* parsed, t_args* parsed_pipe){
 
 int main(){
 
-    std::string inputString;
-    t_args parsedArgs, parsedArgsPiped;
+    char inputString[MAXCOM], *parsedArgs[MAXLIST];
+	char* parsedArgsPiped[MAXLIST];
     int execMode = 0;
 
     while (1){
         printcwd();
-        if(takeInput(&inputString))
+        if(takeInput(inputString))
             continue;
-        execMode = processString(&inputString, &parsedArgs, &parsedArgsPiped);
+        execMode = processString(inputString, parsedArgs, parsedArgsPiped);
         
         // single command
         if(execMode == 1)
