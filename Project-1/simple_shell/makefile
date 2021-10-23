@@ -1,5 +1,5 @@
 mine:
-	g++ -o example my_example.cpp -lreadline
+	g++ -o example my_example.cpp 
 geek:
 	gcc -o example geek_example.c -lreadline
 run:

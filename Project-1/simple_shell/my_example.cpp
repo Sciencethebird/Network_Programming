@@ -8,13 +8,10 @@
 #include<string>
 #include<vector>
 #include<sstream>
-#include<readline/readline.h>
-#include<readline/history.h>
 
-#define MAXCOM 1000 // max number of letters to be supported
-#define MAXLIST 100 // max number of commands to be supported
+#define MAX_CHAR 15000 // max number of letters to be supported
+#define MAX_ARGS 10000 // max number of commands to be supported
 
-typedef std::vector<std::string> t_args;
 
 // print current working directory
 void printcwd(){
@@ -45,16 +42,13 @@ void execArgs(char** parsed){
 // Function to take input
 int takeInput(char* str)
 {
-	char* buf;
-
-	buf = readline("\n% ");
-	if (strlen(buf) != 0) {
-		add_history(buf);
-		strcpy(str, buf);
-		return 0;
-	} else {
-		return 1;
-	}
+    std::string buff;
+    printf("\n%% ");
+    std::getline(std::cin, buff);
+    std::cout << buff << " len: " << buff.length() << std::endl;
+    strcpy(str, buff.c_str());
+    if ( strlen(str) != 0 ) return 0;
+    else return 1;
 }
 
 
@@ -92,7 +86,7 @@ int CmdHandler(char** parsed){
 void parseSpace(char* str, char** parsed){
 	int i;
 
-	for (i = 0; i < MAXLIST; i++) {
+	for (i = 0; i < MAX_CHAR; i++) {
 		parsed[i] = strsep(&str, " ");
 
 		if (parsed[i] == NULL)
@@ -116,8 +110,8 @@ int processString(char* str, char** parsed, char** parsedpipe){
 
 int main(){
 
-    char inputString[MAXCOM], *parsedArgs[MAXLIST];
-	char* parsedArgsPiped[MAXLIST];
+    char inputString[MAX_CHAR], *parsedArgs[MAX_ARGS];
+	char* parsedArgsPiped[MAX_ARGS];
     int execMode = 0;
 
     while (1){
